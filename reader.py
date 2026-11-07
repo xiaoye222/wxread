@@ -20,6 +20,23 @@ REQUEST_TIMEOUT = (10, 30)
 AUTH_ERROR_CODES = {-2012, -2013}
 
 
+def active_books(today=None):
+    """专注阅读：同时只读 FOCUS_BOOKS 本，每 FOCUS_DAYS 天换下一本（按书单顺序轮换）。
+    默认同时读 2 本、每 7 天换一本，所以每本书连续读 14 天，读完一本才开始下一本。
+    FOCUS_BOOKS=0 恢复成整份书单随机读。"""
+    import datetime as dt
+    import os
+    from zoneinfo import ZoneInfo
+    k = int(os.getenv('FOCUS_BOOKS') or 2)
+    if k <= 0 or k >= len(book):
+        return list(book)
+    days = max(1, int(os.getenv('FOCUS_DAYS') or 7))
+    start = dt.date.fromisoformat(os.getenv('FOCUS_START') or '2026-11-07')
+    today = today or dt.datetime.now(ZoneInfo('Asia/Shanghai')).date()
+    slot = (today - start).days // days
+    return [book[(slot + j) % len(book)] for j in range(k)]
+
+
 class AuthenticationError(RuntimeError):
     pass
 
@@ -81,6 +98,8 @@ class ReadClient:
         cancel = cancel or threading.Event()
         completed = repairs = failures = 0
         last_time = int(time.time()) - 30
+        books = active_books()
+        logging.info('本次专注阅读 %d 本：%s', len(books), books)
         try:
             if cancel.is_set():
                 raise Cancelled('任务已停止')
@@ -90,7 +109,7 @@ class ReadClient:
                     raise Cancelled('任务已停止')
                 payload = self.data
                 payload.pop('s', None)
-                payload['b'], payload['c'] = random.choice(book), random.choice(chapter)
+                payload['b'], payload['c'] = random.choice(books), random.choice(chapter)
                 current = int(time.time())
                 payload.update(ct=current, rt=current - last_time,
                                ts=current * 1000 + random.randint(0, 1000), rn=random.randint(0, 1000))
