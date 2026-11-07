@@ -81,10 +81,23 @@ class QRLoginManager:
     @staticmethod
     def open_login(page):
         page.goto('https://weread.qq.com/', wait_until='domcontentloaded', timeout=45000)
+        try:  # 页面脚本初始化前点「登录」不会弹出登录框，先等页面加载完
+            page.wait_for_load_state('load', timeout=20000)
+        except Exception:
+            pass
         qr = page.locator('.wr_login_modal_qr_wrapper').first
-        if not qr.is_visible():
-            page.get_by_text('登录', exact=True).first.click(timeout=15000)
-        page.locator('.wr_login_modal_wrapper').wait_for(state='visible', timeout=30000)
+        modal = page.locator('.wr_login_modal_wrapper')
+        for attempt in range(6):
+            if qr.is_visible() or modal.is_visible():
+                break
+            try:
+                page.get_by_text('登录', exact=True).filter(visible=True).first.click(timeout=15000)
+                modal.wait_for(state='visible', timeout=5000)
+                break
+            except Exception:
+                if attempt == 5:
+                    raise
+        modal.wait_for(state='visible', timeout=30000)
         qr.wait_for(state='visible', timeout=30000)
 
     def _run(self, session_id, options):
