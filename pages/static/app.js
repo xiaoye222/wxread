@@ -107,8 +107,10 @@ async function refresh(force=false) {
         $('#connection').textContent='GitHub 已连接';$('#connection').title='';return true;
       }catch(e){
         if(e.code==='SESSION_CHANGED' || version!==client.sessionVersion)return false;
-        $('#connection').textContent=!client.connected?'需要重新连接':e.code==='RATE_LIMIT'?'限流中 · 等待恢复':e.code==='PERMISSION'?'需要检查仓库权限':'网络波动 · 自动重试';
-        $('#connection').title=e.message;if(force)toast(e.message,true);return false;
+        $('#connection').textContent=!client.connected?'需要重新连接':e.code==='RATE_LIMIT'?'限流中 · 等待恢复':e.code==='ACTIONS_DISABLED'?'Actions 已被停用':e.code==='PERMISSION'?'需要检查仓库权限':'网络波动 · 自动重试';
+        $('#connection').title=e.message;if(force)toast(e.message,true);
+        if(!data && client.connected)$('#content').innerHTML=`<div class="empty"><div class="empty-icon">${icon('list')}</div><h3>暂时无法读取账户状态</h3><p>${esc(e.message)}</p><a class="button" href="${esc('https://github.com/'+(client.repository||'')+'/actions')}" target="_blank" rel="noopener">打开 GitHub Actions</a> <button class="button primary" data-action="retry-load">重试</button></div>`;
+        return false;
       }
     })();
     refreshPromise=task;task.finally(()=>{if(refreshPromise===task)refreshPromise=null;});
@@ -187,6 +189,7 @@ document.addEventListener('click',async e=>{
   const tab=e.target.closest('[data-bind-tab]');if(tab){if(bindTab===tab.dataset.bindTab)return;bindVersion++;closeQR();bindTab=tab.dataset.bindTab;$$('[data-bind-tab]').forEach(b=>b.classList.toggle('active',b===tab));$('#qr-panel').hidden=bindTab!=='qr';$('#import-panel').hidden=bindTab!=='import';$('#import-submit').disabled=false;$('#qr-start').disabled=false;$('#qr-refresh').hidden=true;$('#bind-error').textContent='';return;}
   const button=e.target.closest('[data-action]');if(!button)return;
   const action=button.dataset.action, id=button.dataset.id, account=data?.accounts.find(a=>a.id===id);
+  if(action==='retry-load'){button.disabled=true;$('#content').innerHTML='<div class="loading">加载中…</div>';await refresh(true);return;}
   if(action==='bind'){openBind();return;}if(action==='rebind'){openBind(account);return;}if(action==='edit'){editAccount(account);return;}if(action==='view'){setView(button.dataset.view);return;}
   button.disabled=true;
   try {if(action==='run-all'){const result=await api('/run-all','POST',{});toast(result.started.length?`已启动 ${result.started.length} 个账户任务${result.skipped.length?'；部分账户已在运行或需要重新绑定':''}`:'暂无可以启动的账户任务');}else if(action==='run'){await api('/accounts/'+id+'/run','POST',{});toast('阅读任务已启动');}else if(action==='stop'){await api('/accounts/'+id+'/stop','POST',{});toast('已请求取消本批 Actions 阅读任务');}await refresh(true);}catch(err){toast(err.message,true);button.disabled=false;}

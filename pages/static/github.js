@@ -91,7 +91,11 @@ class GitHubClient {
         throw this.error('GitHub 请求限流，稍后自动恢复；无需重新登录','RATE_LIMIT',true);
       }
       if(response.status>=500 && attempt+1<attempts){await this.delay(1000*2**attempt);continue;}
-      if(!response.ok){const errors={403:'GitHub 权限不足，请检查此 Token 的仓库权限',404:'找不到仓库或工作流，请检查仓库和默认分支',409:'仓库正在更新，请稍后重试',422:'GitHub 拒绝此操作，请确认工作流已发布且允许手动触发'};throw this.error(errors[response.status]||`GitHub 暂时无法完成请求（${response.status}）`,response.status>=500?'NETWORK':'PERMISSION',response.status>=500);}
+      if(!response.ok){
+        let detail='';try{detail=String(JSON.parse(text).message||'');}catch{}
+        if(/actions (has been|is) disabled/i.test(detail))throw this.error('GitHub 已停用此仓库的 Actions（fork 仓库会被自动停用）。请打开仓库 Actions 页面，点击绿色的「I understand my workflows, go ahead and re-enable them」重新启用','ACTIONS_DISABLED');
+        if(/disabled workflow/i.test(detail))throw this.error('该工作流已被停用，请在仓库 Actions 页面重新启用','PERMISSION');
+        const errors={403:'GitHub 权限不足，请检查此 Token 的仓库权限',404:'找不到仓库或工作流，请检查仓库和默认分支',409:'仓库正在更新，请稍后重试',422:'GitHub 拒绝此操作，请确认工作流已发布且允许手动触发'};throw this.error((errors[response.status]||`GitHub 暂时无法完成请求（${response.status}）`)+(detail?`（GitHub：${detail}）`:''),response.status>=500?'NETWORK':'PERMISSION',response.status>=500);}
       const value=text?JSON.parse(text):null;
       if(method==='GET'){this.requestCache.set(path,{etag:response.headers.get('etag'),value:structuredClone(value)});if(this.requestCache.size>80)this.requestCache.delete(this.requestCache.keys().next().value);}
       return value;
