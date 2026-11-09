@@ -68,7 +68,7 @@ function renderSettings() {
         <form id="schedule-form" class="settings-body">
           <label class="toggle-label"><span>开启定时阅读</span><input name="enabled" type="checkbox" class="switch" ${s.enabled?'checked':''}></label>
           <div class="form-row"><label>Cron 表达式<input name="cron" value="${esc(s.cron)}" readonly></label><label>时区<input name="timezone" value="UTC" readonly></label></div>
-          <div class="settings-status">由服务器定时触发；修改时间需同时改服务器 crontab 和 deploy.yml。</div>
+          <div class="settings-status">由服务器每天 23:40～23:59 随机触发；修改时间需同时改服务器 crontab 和 deploy.yml。</div>
           <button class="button primary">保存</button>
           <div class="settings-status">下次：${s.enabled?dateTime(data.next_run):'已暂停'}</div>
         </form>
