@@ -98,7 +98,7 @@ GitHub 插件的连接授权与 Web 后台的 Token 是两套独立登录状态�
 
 ## 定时阅读和运行记录
 
-默认时间为 **北京时间每天 00:00**，由服务器 crontab 调用 `deploy.yml` 的 `workflow_dispatch`（带 `scheduled=true`）准点触发。GitHub 自带的 `schedule` 实测每天延迟近 4 小时，已不再使用。可在页面「计划与通知」启停自动计划；手动运行仍可使用。
+默认时间为 **北京时间每天 23:55**，由服务器 crontab 调用 `deploy.yml` 的 `workflow_dispatch`（带 `scheduled=true`）准点触发。GitHub 自带的 `schedule` 实测每天延迟近 4 小时，已不再使用。可在页面「计划与通知」启停自动计划；手动运行仍可使用。
 
 改变时间要改两处：服务器的 crontab（实际触发时间），以及 `.github/workflows/deploy.yml` 里的 `# external-cron:` 注释（UTC，只用于页面显示“下次执行”）。
 

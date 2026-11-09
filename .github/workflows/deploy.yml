@@ -8,7 +8,7 @@ on:
   # 定时由服务器 crontab 调用 workflow_dispatch（scheduled=true）准点触发：
   # GitHub 的 schedule 实测每天延迟近 4 小时。
   # 下面这行只供页面显示“下次执行”，改时间时要和服务器 crontab 一起改（UTC）。
-  # external-cron: '0 16 * * *'
+  # external-cron: '55 15 * * *'
   workflow_dispatch:
     inputs:
       account_id:
