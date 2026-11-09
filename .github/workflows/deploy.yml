@@ -5,21 +5,21 @@ concurrency:
   cancel-in-progress: false
 
 on:
-  schedule:
-    # 凌晨任务：北京时间每天 01:07（UTC 前一天 17:07），避开 GitHub Actions 整点高峰
-    - cron: '7 17 * * *'
-    # 早间任务：北京时间每天 05:00（UTC 前一天 21:00）
-    #- cron: '0 21 * * *'
-    # 午间任务：北京时间每天 11:40（UTC 03:40）
-    #- cron: '40 3 * * *'
-    # 晚间任务：北京时间每天 22:00（UTC 14:00）
-    #- cron: '0 14 * * *'
+  # 定时由服务器 crontab 调用 workflow_dispatch（scheduled=true）准点触发：
+  # GitHub 的 schedule 实测每天延迟近 4 小时。
+  # 下面这行只供页面显示“下次执行”，改时间时要和服务器 crontab 一起改（UTC）。
+  # external-cron: '7 17 * * *'
   workflow_dispatch:
     inputs:
       account_id:
         description: Empty runs all enabled accounts
         required: false
         type: string
+      scheduled:
+        description: Set by the timer so the pause switch applies
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -54,6 +54,7 @@ jobs:
         GH_TOKEN: ${{ github.token }}
         WXREAD_CONTROL_KEY: ${{ secrets.WXREAD_CONTROL_KEY }}
         READ_ACCOUNT_ID: ${{ inputs.account_id }}
+        READ_SCHEDULED: ${{ inputs.scheduled }}
         WXREAD_CURL_BASH: ${{ secrets.WXREAD_CURL_BASH }}
         WXREAD_ACCOUNTS_JSON: ${{ secrets.WXREAD_ACCOUNTS_JSON }}
         PUSH_METHOD: ${{ secrets.PUSH_METHOD }}

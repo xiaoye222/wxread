@@ -186,7 +186,8 @@ def reading():
         return main()
     repository = GitHubState()
     initial, _ = repository.read()
-    if os.getenv('GITHUB_EVENT_NAME') == 'schedule' and not initial['schedule']['enabled']:
+    timed = os.getenv('GITHUB_EVENT_NAME') == 'schedule' or os.getenv('READ_SCHEDULED') == 'true'
+    if timed and not initial['schedule']['enabled']:
         return 0
     target = os.getenv('READ_ACCOUNT_ID')
     selected = [a for a in initial['accounts'] if a['id'] == target] if target else [a for a in initial['accounts'] if a['enabled']]

@@ -220,7 +220,7 @@ class GitHubState:
 def workflow_cron():
     from pathlib import Path
     path = Path(__file__).parent / '.github/workflows/deploy.yml'
-    match = re.search(r"^\s*- cron:\s*['\"]([^'\"]+)['\"]", path.read_text(), re.M)
+    match = re.search(r"^\s*#\s*external-cron:\s*['\"]([^'\"]+)['\"]", path.read_text(encoding='utf-8'), re.M)
     return match.group(1) if match else '7 17 * * *'
 
 

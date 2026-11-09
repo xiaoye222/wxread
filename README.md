@@ -98,17 +98,9 @@ GitHub 插件的连接授权与 Web 后台的 Token 是两套独立登录状态�
 
 ## 定时阅读和运行记录
 
-默认时间为 **北京时间每天 01:07**，GitHub 的 Cron 为 UTC `7 17 * * *`。可在页面「计划与通知」启停自动计划；手动运行仍可使用。
+默认时间为 **北京时间每天 01:07**，由服务器 crontab 调用 `deploy.yml` 的 `workflow_dispatch`（带 `scheduled=true`）准点触发。GitHub 自带的 `schedule` 实测每天延迟近 4 小时，已不再使用。可在页面「计划与通知」启停自动计划；手动运行仍可使用。
 
-改变时间请编辑 `.github/workflows/deploy.yml` 的 `schedule`，例如：
-
-```yaml
-on:
-  schedule:
-    - cron: '30 0 * * *'  # 北京时间每天 08:30
-```
-
-GitHub 定时工作流可能延迟，长期无仓库活动时还可能停用，不能保证精确到分钟。[官方 schedule 说明](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)。
+改变时间要改两处：服务器的 crontab（实际触发时间），以及 `.github/workflows/deploy.yml` 里的 `# external-cron:` 注释（UTC，只用于页面显示“下次执行”）。
 
 「运行全部」按添加顺序逐个执行所有启用账户，也可以单独运行一个账户。前一个账户结束并关闭网络会话后才轮到下一个；排队中的账户会在开始时读取自己的最新凭据。一个账户失败不会阻止其余账户；登录失效后标记为需要重新绑定。点击「停止本批」会取消该 Actions 阅读工作流，包含它同时执行的所有账户。
 

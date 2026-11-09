@@ -265,5 +265,34 @@ class GitHubCase(unittest.TestCase):
         response=self.api.files['responses/'+'d'*32+'.json']['ciphertext']
         self.assertEqual(unseal(response,client)['status'],'success')
 
+    def run_reading(self, **env):
+        import os
+        from github_worker import reading
+        base={'WXREAD_CONTROL_KEY':'x','READ_ACCOUNT_ID':'','READ_SCHEDULED':'','GITHUB_EVENT_NAME':'workflow_dispatch'}
+        with patch.dict(os.environ,{**base,**env}),patch('github_worker.GitHubState',return_value=self.store),\
+             patch('github_worker.tempfile.TemporaryDirectory',side_effect=LookupError('started')):
+            return reading()
+
+    def pause(self):
+        def apply(state):
+            bind_account(state,self.account,{'read_num':40})
+            control_operation(state,'schedule',{'enabled':False})
+        with patch('github_state.time.sleep'):
+            self.store.mutate(apply)
+
+    def test_timer_dispatch_respects_pause(self):
+        self.pause()
+        self.assertEqual(self.run_reading(READ_SCHEDULED='true'),0)
+
+    def test_manual_dispatch_ignores_pause(self):
+        self.pause()
+        with self.assertRaises(LookupError):
+            self.run_reading()
+
+    def test_external_cron_is_read_from_workflow(self):
+        from github_state import workflow_cron
+        with patch('pathlib.Path.read_text',return_value="on:\n  # external-cron: '1 2 * * *'\n"):
+            self.assertEqual(workflow_cron(),'1 2 * * *')
+
 
 if __name__=='__main__':unittest.main()

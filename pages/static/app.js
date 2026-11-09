@@ -61,7 +61,6 @@ function historyTable(runs) {
 function renderHistory() {const focused=document.activeElement?.id==='history-search', position=$('#history-search')?.selectionStart; const query=$('#history-search')?.value || '';$('#content').innerHTML=header('运行记录',false)+`<section class="panel"><div class="panel-head"><h2>运行记录<span>${data.runs.length} 条</span></h2><input id="history-search" class="search-input" placeholder="搜索账户或结果" aria-label="搜索运行记录" value="${esc(query)}"></div><div id="history-list">${historyTable(data.runs.filter(r=>`${r.account_name} ${r.message}`.includes(query)))}</div></section>`;if(focused){$('#history-search').focus();$('#history-search').setSelectionRange(position,position);}}
 function renderSettings() {
   const s=data.schedule,e=data.email;
-  const scheduleUrl=window.githubClient.url('/edit/'+encodeURIComponent(window.githubClient.branch||'main')+'/.github/workflows/deploy.yml');
   $('#content').innerHTML=header('计划与通知',false)+`
     <div class="settings-layout">
       <section class="panel">
@@ -69,7 +68,7 @@ function renderSettings() {
         <form id="schedule-form" class="settings-body">
           <label class="toggle-label"><span>开启定时阅读</span><input name="enabled" type="checkbox" class="switch" ${s.enabled?'checked':''}></label>
           <div class="form-row"><label>Cron 表达式<input name="cron" value="${esc(s.cron)}" readonly></label><label>时区<input name="timezone" value="UTC" readonly></label></div>
-          <a class="text-button schedule-link" href="${esc(scheduleUrl)}" target="_blank" rel="noopener noreferrer">修改执行时间 ↗</a>
+          <div class="settings-status">由服务器定时触发；修改时间需同时改服务器 crontab 和 deploy.yml。</div>
           <button class="button primary">保存</button>
           <div class="settings-status">下次：${s.enabled?dateTime(data.next_run):'已暂停'}</div>
         </form>
